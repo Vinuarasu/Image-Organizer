@@ -23,6 +23,17 @@ def GetExifData(Files):
                 data.append(st_time.tm_year)
                 data.append(st_time.tm_mon)
                 data.append(st_time.tm_mday)
+                if(md['File:MIMEType'].split("/")[0] == "image"):
+                    img = cv2.imread(file)
+                    #print(file)
+                    if(img.shape[0]>img.shape[1]):
+                        img_ = cv2.resize(img, (200,100))[::4,::4,:].ravel()
+                    else:
+                        img_ = cv2.resize(img, (100,200))[::4,::4,:].ravel()
+                else:
+                    #print("Video")
+                    img_ = ["Video"]
+                data.append(img_)
                 fileinfo.append(data)
                 #print(st_time)
                 #md = e.get_metadata_batch(imagename)
@@ -37,7 +48,7 @@ def GetFileList(root):
         #    print(os.path.join(root, f))  
     return file_list
 
-def CreateDirectories(fileInfo):
+def GetDirectories(fileInfo):
     monthyear = []
     for info in fileInfo:
         monthyear.append('./Organized folder/' + str(info[1]) + '/' +  Months[info[2]])    
@@ -54,11 +65,21 @@ if __name__ == "__main__":
     fileLocation = "./Unorganized folder"
     fileList = GetFileList(fileLocation)
     fileInfo = GetExifData(fileList)
-    folders = CreateDirectories(fileInfo)
-    for file, destfolder in zip(fileInfo, folders):
-        if os.path.exists(file[0]):
-            print("moving: ",file[0])
-            shutil.move(file[0], destfolder)
+    destFolders = GetDirectories(fileInfo)
+    for i, (fileinfo, destfolder) in enumerate(zip(fileInfo, destFolders)):
+        ref_feature = fileinfo[4]
+        if (i>1) and (ref_feature != "Video"):
+            for i in range(i-1):
+                feature = fileInfo[i][4]
+                if (feature != "Video"):
+                    sad = np.sum(abs((ref_feature - fileInfo)))
+                    print(sad)
+
+
+
+        if os.path.exists(fileinfo[0]):
+            print("moving: ",fileinfo[0])
+            shutil.move(fileinfo[0], destfolder)
 
 
     
